@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code2PCB - Premium Arduino to PCB Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-red: #DC2626;
+            --dark-red: #B91C1C;
+            --light-red: #FEE2E2;
+            --white: #FFFFFF;
+            --off-white: #FAFAFA;
+            --dark-gray: #1F2937;
+            --medium-gray: #6B7280;
+            --light-gray: #F3F4F6;
+            --circuit-green: #10B981;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--off-white) 0%, #F8FAFC 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Circuit Background Animation */
+        .circuit-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.03;
+        }
+
+        .circuit-line {
+            position: absolute;
+            background: var(--primary-red);
+            animation: circuit-pulse 3s ease-in-out infinite;
+        }
+
+        .circuit-line.horizontal {
+            height: 2px;
+            width: 200px;
+        }
+
+        .circuit-line.vertical {
+            width: 2px;
+            height: 150px;
+        }
+
+        .circuit-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-red);
+            border-radius: 50%;
+            animation: circuit-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes circuit-pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
+        @keyframes circuit-glow {
+            0% { box-shadow: 0 0 5px var(--primary-red); }
+            100% { box-shadow: 0 0 20px var(--primary-red), 0 0 30px var(--primary-red); }
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            text-align: center;
+            padding: 4rem 2rem 2rem;
+            background: linear-gradient(135deg, var(--white) 0%, var(--light-red) 100%);
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            animation: fade-in-up 1s ease-out;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, var(--primary-red), var(--dark-red));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
+            animation: logo-pulse 2s ease-in-out infinite;
+        }
+
+        .logo-icon::before {
+            content: '';
+            width: 30px;
+            height: 30px;
+            background: var(--white);
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z'/%3E%3C/svg%3E");
+        }
+
+        @keyframes logo-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .brand-name {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: var(--medium-gray);
+            font-weight: 400;
+            margin-top: 0.5rem;
+            animation: fade-in-up 1s ease-out 0.3s both;
+        }
+
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid #E5E7EB;
+            position: relative;
+            overflow: hidden;
+            animation: fade-in-up 1s ease-out 0.6s both;
+        }
+
+        .upload-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-red), var(--dark-red));
+        }
+
+        .section-title {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--primary-red);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .section-subtitle {
+            color: var(--medium-gray);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* File Upload */
+        .upload-form {
+            position: relative;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed #D1D5DB;
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: var(--off-white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-drop-zone:hover {
+            border-color: var(--primary-red);
+            background: var(--light-red);
+            transform: translateY(-2px);
+        }
+
+        .file-drop-zone.drag-over {
+            border-color: var(--primary-red);
+            background: var(--light-red);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .upload-icon::before {
+            content: '';
+            width: 40px;
+            height: 40px;
+            background: var(--white);
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12'/%3E%3C/svg%3E");
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .upload-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtitle {
+            color: var(--medium-gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .file-types {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--primary-red);
+            border: 1px solid var(--primary-red);
+        }
+
+        /* Generate Button */
+        .generate-button {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+            color: var(--white);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
+        }
+
+        .generate-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .generate-button:hover::before {
+            left: 100%;
+        }
+
+        .generate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(220, 38, 38, 0.4);
+        }
+
+        .generate-button:active {
+            transform: translateY(0);
+        }
+
+        .generate-button:disabled {
+            background: var(--medium-gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .generate-button.disabled {
+            background: var(--medium-gray) !important;
+            cursor: not-allowed !important;
+        }
+
+        /* Status Display */
+        .status-display {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+            animation: slide-in 0.3s ease-out;
+        }
+
+        .status-display.loading {
+            display: block;
+            background: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+        }
+
+        .status-display.error {
+            display: block;
+            background: #FEE2E2;
+            color: #DC2626;
+            border: 1px solid #FECACA;
+        }
+
+        @keyframes slide-in {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #F3F4F6;
+            border-top: 2px solid var(--primary-red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Pulse Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .brand-name {
+                font-size: 2.5rem;
+            }
+            
+            .container {
+                padding: 2rem 1rem;
+            }
+            
+            .upload-section {
+                padding: 2rem;
+                border-radius: 16px;
+            }
+            
+            .file-drop-zone {
+                padding: 2rem;
+            }
+        }
+
+        /* File Selected State */
+        .file-selected {
+            background: #F0FDF4 !important;
+            border-color: var(--circuit-green) !important;
+        }
+
+        .file-selected .upload-icon {
+            background: linear-gradient(135deg, var(--circuit-green), #059669) !important;
+        }
+
+        .file-info {
+            background: var(--white);
+            border: 1px solid var(--circuit-green);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+            animation: slide-in 0.3s ease-out;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--dark-gray);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .file-size {
+            color: var(--medium-gray);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Circuit Background -->
+    <div class="circuit-bg" id="circuitBg"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <h1 class="brand-name">Code2PCB</h1>
+        </div>
+        <p class="tagline">Transform your Arduino code into professional PCB designs</p>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="upload-section">
+            <h2 class="section-title">Arduino Code Upload</h2>
+            <p class="section-subtitle">Upload your .ino file and let our AI generate a custom PCB layout</p>
+            
+            <form class="upload-form" id="uploadForm">
+                <div class="file-drop-zone" id="dropZone">
+                    <div class="upload-icon"></div>
+                    <div class="upload-text">Drop your Arduino file here</div>
+                    <div class="upload-subtitle">or click to browse</div>
+                    <div class="file-types">.ino files only</div>
+                    <input type="file" class="file-input" id="fileInput" name="file" accept=".ino" required>
+                </div>
+                
+                <div class="file-info" id="fileInfo">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-size" id="fileSize"></div>
+                </div>
+                
+                <button type="submit" class="generate-button disabled" id="generateBtn" disabled>
+                    Generate PCB Layout
+                </button>
+            </form>
+            
+            <div class="status-display" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Circuit background generation
+        function createCircuitBackground() {
+            const circuitBg = document.getElementById('circuitBg');
+            const numElements = 20;
+            
+            for (let i = 0; i < numElements; i++) {
+                // Create circuit lines
+                const line = document.createElement('div');
+                line.className = Math.random() > 0.5 ? 'circuit-line horizontal' : 'circuit-line vertical';
+                line.style.left = Math.random() * 100 + '%';
+                line.style.top = Math.random() * 100 + '%';
+                line.style.animationDelay = Math.random() * 3 + 's';
+                circuitBg.appendChild(line);
+                
+                // Create circuit dots
+                if (i % 3 === 0) {
+                    const dot = document.createElement('div');
+                    dot.className = 'circuit-dot';
+                    dot.style.left = Math.random() * 100 + '%';
+                    dot.style.top = Math.random() * 100 + '%';
+                    dot.style.animationDelay = Math.random() * 2 + 's';
+                    circuitBg.appendChild(dot);
+                }
+            }
+        }
+
+        // File upload functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            createCircuitBackground();
+            
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const generateBtn = document.getElementById('generateBtn');
+            const status = document.getElementById('status');
+
+            // Drag and drop handlers
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
+            });
+
+            // File input change handler
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            // Click handler for drop zone to trigger file input
+            dropZone.addEventListener('click', function(e) {
+                fileInput.click();
+            });
+
+            // Handle file selection
+            function handleFileSelect(file) {
+                if (!file.name.endsWith('.ino')) {
+                    showStatus('Please select a valid .ino file', 'error');
+                    return;
+                }
+
+                dropZone.classList.add('file-selected');
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.classList.add('show');
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('disabled');
+                
+                // Hide any previous status
+                status.style.display = 'none';
+            }
+
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Show status messages
+            function showStatus(message, type) {
+                status.className = `status-display ${type}`;
+                status.style.display = 'block';
+                
+                if (type === 'loading') {
+                    status.innerHTML = `<span class="loading-spinner"></span>${message}`;
+                } else {
+                    status.textContent = message;
+                }
+            }
+
+            // Form submission
+            document.getElementById("uploadForm").addEventListener("submit", async function(e) {
+                e.preventDefault();
+
+                if (!fileInput.files.length) {
+                    showStatus("Please select a .ino file!", 'error');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("file", fileInput.files[0]);
+
+generateBtn.disabled = true;
+showStatus("Processing your Arduino code...", 'loading');
+
+try {
+    const response = await fetch("/upload", {
+        method: "POST",
+        body: formData
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+        // When PCB generation is successful
+        showStatus("🎉 PCB Generated Successfully!", 'success');
+
+        generateBtn.textContent = "Download PCB";
+        generateBtn.disabled = false;  // Re-enable for download action
+
+        // Optionally, if there's a download URL in the response
+        generateBtn.onclick = () => {
+            window.location.href = result.download_url; // ensure your app.py sends this URL
+        };
+    } else {
+        showStatus(`Error: ${result.error || 'Failed to generate PCB.'}`, 'error');
+        generateBtn.disabled = false;
+    }
+
+} catch (error) {
+    console.error(error);
+    showStatus("An unexpected error occurred while generating the PCB.", 'error');
+    generateBtn.disabled = false;
+}
+
+            });
+        });
+    </script>
+</body>
+</html>
