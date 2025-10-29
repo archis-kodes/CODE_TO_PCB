@@ -1,0 +1,239 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Robot Eyes LED Matrix PCB",
+    "description": "PCB for Arduino-based robot eyes animation using MAX7219 LED matrix modules. Supports coordinated eye animations and text display via SPI. Includes microcontroller, power, decoupling, reset, and LED matrix interface.",
+    "board": {
+        "size": {
+            "width": 80,
+            "height": 60
+        },
+        "track_width": 0.25,
+        "clearance": 0.2,
+        "min_drill": 0.3,
+        "layers": [
+            "F.Cu",
+            "B.Cu"
+        ]
+    },
+    "components": [
+        {
+            "name": "U1",
+            "type": "ATmega328P",
+            "value": "ATmega328P",
+            "footprint": "DIP-28_W7.62mm",
+            "position": {
+                "x": 20,
+                "y": 30
+            },
+            "rotation": 0,
+            "description": "Microcontroller running the RobotEyes sketch, handles SPI communication and animation logic"
+        },
+        {
+            "name": "J1",
+            "type": "Connector",
+            "value": "Power Header",
+            "footprint": "PinHeader_1x02_P2.54mm_Vertical",
+            "position": {
+                "x": 10,
+                "y": 50
+            },
+            "rotation": 270,
+            "description": "Power input connector for VCC and GND"
+        },
+        {
+            "name": "C1",
+            "type": "Capacitor",
+            "value": "100nF",
+            "footprint": "C_0805_2012Metric",
+            "position": {
+                "x": 22,
+                "y": 35
+            },
+            "rotation": 0,
+            "description": "Decoupling capacitor for microcontroller VCC"
+        },
+        {
+            "name": "R1",
+            "type": "Resistor",
+            "value": "10K",
+            "footprint": "R_0805_2012Metric",
+            "position": {
+                "x": 18,
+                "y": 25
+            },
+            "rotation": 0,
+            "description": "Pull-up resistor for RESET pin"
+        },
+        {
+            "name": "LEDM1",
+            "type": "LED Matrix",
+            "value": "MAX7219 8x8",
+            "footprint": "LEDMatrix_8x8_10mm",
+            "position": {
+                "x": 50,
+                "y": 20
+            },
+            "rotation": 0,
+            "description": "MAX7219-based 8x8 LED matrix module, first in chain (right eye)"
+        },
+        {
+            "name": "LEDM2",
+            "type": "LED Matrix",
+            "value": "MAX7219 8x8",
+            "footprint": "LEDMatrix_8x8_10mm",
+            "position": {
+                "x": 60,
+                "y": 20
+            },
+            "rotation": 0,
+            "description": "MAX7219-based 8x8 LED matrix module, second in chain (left eye)"
+        }
+    ],
+    "connections": [
+        {
+            "from": "J1:1",
+            "to": "U1:VCC",
+            "net": "VCC",
+            "class": "power",
+            "description": "Power input to microcontroller"
+        },
+        {
+            "from": "J1:2",
+            "to": "U1:GND",
+            "net": "GND",
+            "class": "ground",
+            "description": "Ground reference"
+        },
+        {
+            "from": "U1:VCC",
+            "to": "C1:1",
+            "net": "VCC",
+            "class": "power",
+            "description": "Decoupling capacitor to VCC"
+        },
+        {
+            "from": "C1:2",
+            "to": "U1:GND",
+            "net": "GND",
+            "class": "ground",
+            "description": "Decoupling capacitor to ground"
+        },
+        {
+            "from": "U1:RESET",
+            "to": "R1:1",
+            "net": "RESET_PULLUP",
+            "class": "signal",
+            "description": "RESET pin to pull-up resistor"
+        },
+        {
+            "from": "R1:2",
+            "to": "U1:VCC",
+            "net": "VCC",
+            "class": "power",
+            "description": "Pull-up resistor to VCC"
+        },
+        {
+            "from": "U1:PB2",
+            "to": "LEDM1:LOAD",
+            "net": "LOAD",
+            "class": "digital",
+            "description": "SPI chip select (LOAD/CS) to first LED matrix"
+        },
+        {
+            "from": "U1:PB3",
+            "to": "LEDM1:DIN",
+            "net": "DIN",
+            "class": "digital",
+            "description": "SPI data in (DIN) to first LED matrix"
+        },
+        {
+            "from": "U1:PB5",
+            "to": "LEDM1:CLK",
+            "net": "CLK",
+            "class": "digital",
+            "description": "SPI clock (CLK) to first LED matrix"
+        },
+        {
+            "from": "LEDM1:DOUT",
+            "to": "LEDM2:DIN",
+            "net": "DIN",
+            "class": "digital",
+            "description": "Daisy-chain data out from first matrix to second matrix DIN"
+        },
+        {
+            "from": "LEDM1:LOAD",
+            "to": "LEDM2:LOAD",
+            "net": "LOAD",
+            "class": "digital",
+            "description": "Chip select (LOAD) shared between both matrices"
+        },
+        {
+            "from": "LEDM1:CLK",
+            "to": "LEDM2:CLK",
+            "net": "CLK",
+            "class": "digital",
+            "description": "Clock (CLK) shared between both matrices"
+        },
+        {
+            "from": "LEDM1:VCC",
+            "to": "J1:1",
+            "net": "VCC",
+            "class": "power",
+            "description": "Power to first LED matrix"
+        },
+        {
+            "from": "LEDM1:GND",
+            "to": "J1:2",
+            "net": "GND",
+            "class": "ground",
+            "description": "Ground to first LED matrix"
+        },
+        {
+            "from": "LEDM2:VCC",
+            "to": "J1:1",
+            "net": "VCC",
+            "class": "power",
+            "description": "Power to second LED matrix"
+        },
+        {
+            "from": "LEDM2:GND",
+            "to": "J1:2",
+            "net": "GND",
+            "class": "ground",
+            "description": "Ground to second LED matrix"
+        }
+    ],
+    "drills": [],
+    "optimization": {
+        "enabled": false,
+        "method": "force_directed",
+        "iterations": 100
+    },
+    "drc": {
+        "enabled": true,
+        "rules": {
+            "min_track_width": 0.15,
+            "min_clearance": 0.2,
+            "min_drill": 0.3
+        }
+    },
+    "libraries": {
+        "footprint_paths": [
+            "/usr/share/kicad/footprints"
+        ]
+    },
+    "metadata": {
+        "name": "RobotEyes_LED_Matrix_PCB",
+        "description": "PCB for Arduino-based robot eyes using two MAX7219 LED matrices, controlled via SPI for coordinated animations and text display",
+        "version": "1.0",
+        "author": "embedded-systems-assistant",
+        "arduino_sketch": "Led_Matrix_RobotEyes.ino",
+        "notes": [
+            "Assumes ATmega328P with Arduino bootloader",
+            "Provide regulated 5V to J1",
+            "LED matrices are daisy-chained via SPI; first matrix is right eye, second is left",
+            "No additional current-limiting resistors needed for MAX7219 modules",
+            "Add 16MHz crystal and capacitors if using external oscillator"
+        ]
+    }
+}
